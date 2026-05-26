@@ -1,0 +1,2 @@
+[console_scripts]
+mrags = mrags.cli:app
