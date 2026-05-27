@@ -54,7 +54,7 @@ Set `EMBEDDING_BACKEND=local` and `LOCAL_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5`
 If you do not have an OpenAI key, set `ENABLE_VLM=false` and `ENABLE_LMM=false` to skip image
 summarization and answer generation.
 
-### Local LMM (RTX 4060 8GB)
+### Local LMM (RTX 4060 8GB) (This was my setup)
 Set `LMM_BACKEND=local`, point `LMM_MODEL_PATH` to a GGUF file, and keep `ENABLE_LMM=true`.
 For 8GB VRAM, a 4-bit 3B GGUF like `qwen2.5-3b-instruct-q4_k_m.gguf` fits well with
 `LMM_N_GPU_LAYERS=20`.
