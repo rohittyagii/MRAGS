@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: mrags
-Version: 0.1.0
+Version: 0.2.0
 Summary: Enterprise multimodal RAG system
 Author: MRAGS
 License: MIT
@@ -27,25 +27,101 @@ Requires-Dist: llama-cpp-python>=0.3.5
 Enterprise Multimodal RAG System.
 
 ## Overview
-This project ingests visually complex PDFs, separates text/tables/images, summarizes images with a VLM, embeds everything into a shared vector space, and retrieves Top-K context for multimodal generation.
+This project reads complex PDFs, splits them into easy-to-handle parts (text, tables, images),
+summarizes images with a vision model when enabled, embeds everything into vectors, and then
+retrieves the most relevant pieces to answer questions.
 
-## Quick start
-1. Create a virtual environment and install dependencies.
-2. Set environment variables from `.env.example`.
-3. Run ingest:
-   - `mrags ingest --pdf-path path/to/file.pdf`
-4. Run query:
-   - `mrags query --question "What does the chart show?"`
+## Quick start (simple steps)
+1. Make a Python virtual environment and install dependencies.
+2. Copy `.env.example` to `.env` and adjust any paths you need.
+3. Index a PDF:
+   - `mrags ingest path/to/file.pdf`
+4. Ask a question about the PDF:
+   - `mrags query "What does the chart show?"`
+
+New CLI options:
+
+- To see only the retrieved context (no LMM output), use `--context-only` or `-c`:
+   - `mrags query "Summarize the ingested PDF." --context-only`
+- To check index and DB status:
+   - `mrags status`
+
+## Beginner-friendly local run (no API key)
+If you want everything to run on your machine without any online API calls:
+
+1. Copy `.env.example` to `.env`.
+2. Set these values:
+   - `EMBEDDING_BACKEND=local`
+   - `LOCAL_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5`
+   - `ENABLE_VLM=false` (skips image summaries)
+   - `ENABLE_LMM=true` and set `LMM_BACKEND=local`
+   - `LMM_MODEL_PATH` to your GGUF file path
+3. Ingest your PDF:
+   - `mrags ingest path/to/file.pdf`
+4. Ask a question:
+   - `mrags query "Summarize the ingested PDF."`
+
+Tip: If you want retrieval only (no answer generation), set `ENABLE_LMM=false`.
+
+## Local files and GitHub — short answer
+Local files (PDFs, FAISS indexes, SQLite DB, and model files) stay on your computer.
+This repository already ignores common local files like `.env`, the `data/` folder,
+`*.pdf` and `*.gguf`. GitHub only contains what you explicitly `git add` and `git commit`.
+
+## FAQ (beginner friendly)
+**Do I need an OpenAI key?**
+No. You can run fully offline by using local embeddings and a local GGUF model.
+
+**Why is my answer slow?**
+Local models run on your CPU/GPU, which can take time. Smaller GGUF files are faster.
+
+**Can I see the retrieved text?**
+Yes. The CLI now shows a short preview of each top match so you can see what it used.
+
+**Where does my PDF go?**
+It stays on your machine. The extracted text and vectors are stored in `data/` locally.
 
 ### Local embeddings (no API key)
 Set `EMBEDDING_BACKEND=local` and `LOCAL_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5`.
 If you do not have an OpenAI key, set `ENABLE_VLM=false` and `ENABLE_LMM=false` to skip image
 summarization and answer generation.
 
-### Local LMM (RTX 4060 8GB)
+### Local LMM (RTX 4060 8GB) (This was my setup)
 Set `LMM_BACKEND=local`, point `LMM_MODEL_PATH` to a GGUF file, and keep `ENABLE_LMM=true`.
 For 8GB VRAM, a 4-bit 3B GGUF like `qwen2.5-3b-instruct-q4_k_m.gguf` fits well with
 `LMM_N_GPU_LAYERS=20`.
+
+Examples — quick commands you can run locally:
+
+```powershell
+# Validate the local LMM loads:
+python -m mrags.cli validate-lmm
+
+# Ingest a PDF:
+python -m mrags.cli ingest Application.pdf
+
+# Show only retrieved context (no generation):
+python -m mrags.cli query "Give me a short summary." -c
+
+# Show index and DB status:
+python -m mrags.cli status
+```
+
+## Daily update flow (GitHub)
+Use this after you make changes and want to push them.
+
+1. Check what changed:
+   - `git status`
+2. Add files you want to publish:
+   - `git add .`
+3. Commit with a clear message:
+   - `git commit -m "Daily update"`
+4. Push to GitHub:
+   - `git push`
+
+If this is your first push from this machine, run once:
+- `git remote -v` to confirm your GitHub remote is set.
+- If needed: `git push -u origin main`
 
 ## Notes
 - The ingestion pipeline uses `unstructured` with the `hi_res` strategy.

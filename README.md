@@ -15,6 +15,13 @@ retrieves the most relevant pieces to answer questions.
 4. Ask a question about the PDF:
    - `mrags query "What does the chart show?"`
 
+New CLI options:
+
+- To see only the retrieved context (no LMM output), use `--context-only` or `-c`:
+   - `mrags query "Summarize the ingested PDF." --context-only`
+- To check index and DB status:
+   - `mrags status`
+
 ## Beginner-friendly local run (no API key)
 If you want everything to run on your machine without any online API calls:
 
@@ -59,6 +66,22 @@ summarization and answer generation.
 Set `LMM_BACKEND=local`, point `LMM_MODEL_PATH` to a GGUF file, and keep `ENABLE_LMM=true`.
 For 8GB VRAM, a 4-bit 3B GGUF like `qwen2.5-3b-instruct-q4_k_m.gguf` fits well with
 `LMM_N_GPU_LAYERS=20`.
+
+Examples — quick commands you can run locally:
+
+```powershell
+# Validate the local LMM loads:
+python -m mrags.cli validate-lmm
+
+# Ingest a PDF:
+python -m mrags.cli ingest Application.pdf
+
+# Show only retrieved context (no generation):
+python -m mrags.cli query "Give me a short summary." -c
+
+# Show index and DB status:
+python -m mrags.cli status
+```
 
 ## Daily update flow (GitHub)
 Use this after you make changes and want to push them.
