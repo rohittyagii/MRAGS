@@ -10,8 +10,16 @@ from .prompt_builder import PromptBuilder
 
 
 class LMMClient:
+    """Wrapper around an Async OpenAI client to ask LLM questions using context.
+
+    Use this when `LMM_BACKEND` is OpenAI. The class handles building the
+    chat messages and returning a clean `LMMAnswer`.
+    """
+
     def __init__(self, client: AsyncOpenAI, model: str, system_prompt: str) -> None:
-        """Time Complexity: O(1)
+        """Initialize the OpenAI-backed LMM client.
+
+        Time Complexity: O(1)
         Space Complexity: O(1)
         """
         self._client = client
@@ -19,7 +27,9 @@ class LMMClient:
         self._prompt_builder = PromptBuilder(system_prompt)
 
     async def answer(self, question: str, elements: list[RetrievedElement]) -> LMMAnswer:
-        """Time Complexity: O(N)
+        """Ask the remote model to answer using the retrieved elements as context.
+
+        Time Complexity: O(N)
         Space Complexity: O(N)
         """
         messages = self._prompt_builder.build_messages(question, elements)
@@ -33,6 +43,12 @@ class LMMClient:
 
 
 class LocalLMMClient:
+    """Local LLM client using `llama_cpp` to run GGUF models on-device.
+
+    This is used when `LMM_BACKEND` is set to `local` and a `LMM_MODEL_PATH`
+    points at a GGUF file.
+    """
+
     def __init__(
         self,
         model_path: str,
@@ -43,7 +59,9 @@ class LocalLMMClient:
         n_gpu_layers: int,
         n_threads: int,
     ) -> None:
-        """Time Complexity: O(1)
+        """Initialize the on-device Llama instance.
+
+        Time Complexity: O(1)
         Space Complexity: O(1)
         """
         from llama_cpp import Llama
@@ -59,14 +77,18 @@ class LocalLMMClient:
         self._temperature = temperature
 
     async def answer(self, question: str, elements: list[RetrievedElement]) -> LMMAnswer:
-        """Time Complexity: O(N)
+        """Generate an answer locally by building a prompt and calling the model.
+
+        Time Complexity: O(N)
         Space Complexity: O(N)
         """
         prompt = self._prompt_builder.build_text_prompt(question, elements)
         return await asyncio.to_thread(self._generate, prompt, elements)
 
     def _generate(self, prompt: str, elements: list[RetrievedElement]) -> LMMAnswer:
-        """Time Complexity: O(N)
+        """Synchronous generation helper that calls the llama instance.
+
+        Time Complexity: O(N)
         Space Complexity: O(N)
         """
         output = self._llama(

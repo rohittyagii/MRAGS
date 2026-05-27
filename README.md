@@ -7,12 +7,12 @@ This project reads complex PDFs, splits them into easy-to-handle parts (text, ta
 summarizes images with a vision model when enabled, embeds everything into vectors, and then
 retrieves the most relevant pieces to answer questions.
 
-## Quick start
-1. Create a virtual environment and install dependencies.
-2. Set environment variables from `.env.example`.
-3. Ingest a PDF:
+## Quick start (simple steps)
+1. Make a Python virtual environment and install dependencies.
+2. Copy `.env.example` to `.env` and adjust any paths you need.
+3. Index a PDF:
    - `mrags ingest path/to/file.pdf`
-4. Ask a question:
+4. Ask a question about the PDF:
    - `mrags query "What does the chart show?"`
 
 ## Beginner-friendly local run (no API key)
@@ -32,9 +32,10 @@ If you want everything to run on your machine without any online API calls:
 
 Tip: If you want retrieval only (no answer generation), set `ENABLE_LMM=false`.
 
-## Local files and GitHub
-Your local PDFs, indexes, and model files stay on your machine. This repo already ignores:
-`.env`, `data/`, `*.pdf`, and `*.gguf`. GitHub only receives files you `git add` and `git commit`.
+## Local files and GitHub — short answer
+Local files (PDFs, FAISS indexes, SQLite DB, and model files) stay on your computer.
+This repository already ignores common local files like `.env`, the `data/` folder,
+`*.pdf` and `*.gguf`. GitHub only contains what you explicitly `git add` and `git commit`.
 
 ## FAQ (beginner friendly)
 **Do I need an OpenAI key?**

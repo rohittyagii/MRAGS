@@ -7,6 +7,10 @@ from pydantic import BaseModel
 
 
 class AppSettings(BaseModel):
+    """Application configuration read from environment variables.
+
+    This holds sensible defaults so the CLI works out of the box.
+    """
     openai_api_key: str | None = None
     embedding_backend: str = "openai"
     embedding_model: str = "text-embedding-3-small"
@@ -37,7 +41,9 @@ class AppSettings(BaseModel):
 
     @classmethod
     def from_env(cls) -> "AppSettings":
-        """Time Complexity: O(1)
+        """Build `AppSettings` by reading environment variables.
+
+        Time Complexity: O(1)
         Space Complexity: O(1)
         """
         defaults = cls()
@@ -78,7 +84,9 @@ class AppSettings(BaseModel):
 
 
 def ensure_parent_dir(path_str: str) -> None:
-    """Time Complexity: O(1)
+    """Create the parent directory for a given path if it doesn't exist.
+
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     path = Path(path_str)
@@ -86,7 +94,9 @@ def ensure_parent_dir(path_str: str) -> None:
 
 
 def _parse_bool(value: str | None, default: bool) -> bool:
-    """Time Complexity: O(1)
+    """Parse common truthy strings into a boolean.
+
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     if value is None:

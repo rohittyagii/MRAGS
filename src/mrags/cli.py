@@ -32,7 +32,8 @@ console = Console()
 
 @app.command()
 def ingest(pdf_path: str) -> None:
-    """Time Complexity: O(N)
+    """Ingest a PDF into the local index and database.
+    Time Complexity: O(N)
     Space Complexity: O(N)
     """
     asyncio.run(_ingest_async(pdf_path))
@@ -40,7 +41,8 @@ def ingest(pdf_path: str) -> None:
 
 @app.command()
 def query(question: str) -> None:
-    """Time Complexity: O(N)
+    """Run a retrieval (and optional local LMM) query against the index.
+    Time Complexity: O(N)
     Space Complexity: O(N)
     """
     asyncio.run(_query_async(question))
@@ -48,7 +50,8 @@ def query(question: str) -> None:
 
 @app.command("validate-lmm")
 def validate_lmm() -> None:
-    """Time Complexity: O(1)
+    """Quick local LMM sanity check — confirms the configured GGUF loads.
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     settings = AppSettings.from_env()
@@ -84,7 +87,7 @@ async def _ingest_async(pdf_path: str) -> None:
         # 2) Convert raw elements into processed chunks and summaries.
         processed_elements = await pipeline.process(raw_elements)
         if not processed_elements:
-            console.print("No elements extracted.")
+            console.print("No content was extracted from the PDF. Check the file and try again.")
             return
         # 3) Embed the processed summaries.
         embedding_client = _build_embedder(settings)
@@ -109,7 +112,8 @@ async def _ingest_async(pdf_path: str) -> None:
 
 
 async def _query_async(question: str) -> None:
-    """Time Complexity: O(N)
+    """Ask a question: retrieves relevant chunks and (optionally) runs the LMM.
+    Time Complexity: O(N)
     Space Complexity: O(N)
     """
     settings = AppSettings.from_env()
@@ -134,7 +138,8 @@ async def _query_async(question: str) -> None:
 
 
 def _build_router(settings: AppSettings, session: aiohttp.ClientSession) -> ElementRouter:
-    """Time Complexity: O(1)
+    """Create processors and the router that maps PDF elements to handlers.
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     text_processor = TextProcessor(settings.chunk_tokens, settings.chunk_overlap)
@@ -168,14 +173,16 @@ def _build_router(settings: AppSettings, session: aiohttp.ClientSession) -> Elem
 
 
 def _configure_logging(level: str) -> None:
-    """Time Complexity: O(1)
+    """Configure basic logging for the CLI.
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     logging.basicConfig(level=level)
 
 
 def _build_lmm_client(settings: AppSettings):
-    """Time Complexity: O(1)
+    """Return a configured LMM client (local or OpenAI-backed).
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     system_prompt = (
@@ -199,7 +206,8 @@ def _build_lmm_client(settings: AppSettings):
 
 
 def _validate_local_lmm(settings: AppSettings) -> None:
-    """Time Complexity: O(1)
+    """Ensure a local LMM backend is configured and the model exists.
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     if settings.lmm_backend.lower() != "local":
@@ -211,7 +219,8 @@ def _validate_local_lmm(settings: AppSettings) -> None:
 
 
 def _build_embedder(settings: AppSettings):
-    """Time Complexity: O(1)
+    """Return the embeddings client based on settings (local or OpenAI).
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     if settings.embedding_backend.lower() == "local":
@@ -226,7 +235,8 @@ def _build_embedder(settings: AppSettings):
 
 
 def _require_openai_key(settings: AppSettings) -> str:
-    """Time Complexity: O(1)
+    """Read and validate the `OPENAI_API_KEY` setting from the environment.
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     if not settings.openai_api_key:
@@ -235,14 +245,16 @@ def _require_openai_key(settings: AppSettings) -> str:
 
 
 def _require_openai_client(settings: AppSettings) -> AsyncOpenAI:
-    """Time Complexity: O(1)
+    """Create an `AsyncOpenAI` client using the configured API key.
+    Time Complexity: O(1)
     Space Complexity: O(1)
     """
     return AsyncOpenAI(api_key=_require_openai_key(settings))
 
 
 def _render_answer(answer: str, elements: list[RetrievedElement]) -> None:
-    """Time Complexity: O(N)
+    """Print the model's answer and the retrieved context used to form it.
+    Time Complexity: O(N)
     Space Complexity: O(N)
     """
     console.print("\nAnswer:\n")
@@ -251,15 +263,17 @@ def _render_answer(answer: str, elements: list[RetrievedElement]) -> None:
 
 
 def _render_context_only(elements: list[RetrievedElement]) -> None:
-    """Time Complexity: O(N)
+    """Show the retrieved pieces of text when the LMM is turned off.
+    Time Complexity: O(N)
     Space Complexity: O(N)
     """
-    console.print("\nLMM is disabled, so here is the retrieved context only.\n")
+    console.print("\nLMM is disabled. Showing retrieved context only:\n")
     _render_retrieved_context(elements)
 
 
 def _render_retrieved_context(elements: list[RetrievedElement]) -> None:
-    """Time Complexity: O(N)
+    """Render a table with the top matching elements and a short preview.
+    Time Complexity: O(N)
     Space Complexity: O(N)
     """
     table = Table(title="Retrieved Context (Top Matches)")
@@ -279,7 +293,8 @@ def _render_retrieved_context(elements: list[RetrievedElement]) -> None:
 
 
 def _preview_text(text: str, max_len: int = 160) -> str:
-    """Time Complexity: O(N)
+    """Return a short, cleaned preview of the input text for CLI display.
+    Time Complexity: O(N)
     Space Complexity: O(N)
     """
     normalized = " ".join(text.split())

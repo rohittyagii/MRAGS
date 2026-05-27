@@ -7,13 +7,21 @@ from mrags.storage.sqlite_kv import SQLiteKVStore
 
 
 class Retriever:
+    """Finds the most relevant document pieces for a query using embeddings.
+
+    The Retriever coordinates the embedder, FAISS index, and SQLite store to
+    return `RetrievedElement` objects ranked by similarity.
+    """
+
     def __init__(
         self,
         embedder: EmbeddingsClient,
         index: FaissIndex,
         store: SQLiteKVStore,
     ) -> None:
-        """Time Complexity: O(1)
+        """Create a retriever with the necessary storage and embedding clients.
+
+        Time Complexity: O(1)
         Space Complexity: O(1)
         """
         self._embedder = embedder
@@ -21,7 +29,9 @@ class Retriever:
         self._store = store
 
     async def retrieve(self, query: str, top_k: int) -> list[RetrievedElement]:
-        """Time Complexity: O(N)
+        """Return the top-k most relevant elements for `query`.
+
+        Time Complexity: O(N)
         Space Complexity: O(N)
         """
         vectors = await self._embedder.embed_texts([query])
