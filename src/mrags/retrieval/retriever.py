@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from typing import Any
+
 from mrags.models import RetrievedElement
-from mrags.storage.embeddings import EmbeddingsClient
 from mrags.storage.faiss_index import FaissIndex
 from mrags.storage.sqlite_kv import SQLiteKVStore
 
@@ -15,7 +16,7 @@ class Retriever:
 
     def __init__(
         self,
-        embedder: EmbeddingsClient,
+        embedder: Any,
         index: FaissIndex,
         store: SQLiteKVStore,
     ) -> None:

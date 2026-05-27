@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 from typing import Iterable
 
-from sentence_transformers import SentenceTransformer
-
-from openai import AsyncOpenAI
-
 from mrags.errors import EmbeddingError
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
 
 
 class EmbeddingsClient:
@@ -58,6 +58,8 @@ class LocalEmbeddingsClient:
         """Time Complexity: O(1)
         Space Complexity: O(1)
         """
+        from sentence_transformers import SentenceTransformer
+
         self._model = SentenceTransformer(model_name)
 
     async def embed_texts(self, texts: list[str], batch_size: int = 64) -> list[list[float]]:
