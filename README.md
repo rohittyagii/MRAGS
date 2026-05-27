@@ -22,7 +22,7 @@ New CLI options:
 - To check index and DB status:
    - `mrags status`
 
-## Beginner-friendly local run (no API key)
+## Local run (no API key)
 If you want everything to run on your machine without any online API calls:
 
 1. Copy `.env.example` to `.env`.
@@ -39,12 +39,7 @@ If you want everything to run on your machine without any online API calls:
 
 Tip: If you want retrieval only (no answer generation), set `ENABLE_LMM=false`.
 
-## Local files and GitHub — short answer
-Local files (PDFs, FAISS indexes, SQLite DB, and model files) stay on your computer.
-This repository already ignores common local files like `.env`, the `data/` folder,
-`*.pdf` and `*.gguf`. GitHub only contains what you explicitly `git add` and `git commit`.
-
-## FAQ (beginner friendly)
+## FAQS
 **Do I need an OpenAI key?**
 No. You can run fully offline by using local embeddings and a local GGUF model.
 
@@ -94,10 +89,6 @@ Use this after you make changes and want to push them.
    - `git commit -m "Daily update"`
 4. Push to GitHub:
    - `git push`
-
-If this is your first push from this machine, run once:
-- `git remote -v` to confirm your GitHub remote is set.
-- If needed: `git push -u origin main`
 
 ## Notes
 - The ingestion pipeline uses `unstructured` with the `hi_res` strategy.
