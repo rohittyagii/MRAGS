@@ -115,6 +115,26 @@ class SQLiteKVStore:
             for row in rows
         ]
 
+    def count_elements(self) -> int:
+        """Return the number of stored elements in the `elements` table.
+
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        cursor = self._conn.execute("SELECT COUNT(1) as c FROM elements")
+        row = cursor.fetchone()
+        return int(row["c"]) if row is not None else 0
+
+    def count_vector_meta(self) -> int:
+        """Return the number of rows in the `vector_meta` table.
+
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        cursor = self._conn.execute("SELECT COUNT(1) as c FROM vector_meta")
+        row = cursor.fetchone()
+        return int(row["c"]) if row is not None else 0
+
     def get_vector_metadata(self, vector_ids: list[int]) -> list[tuple[int, str, Modality]]:
         """Time Complexity: O(N)
         Space Complexity: O(N)

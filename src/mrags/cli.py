@@ -40,12 +40,17 @@ def ingest(pdf_path: str) -> None:
 
 
 @app.command()
-def query(question: str) -> None:
+def query(
+    question: str,
+    context_only: bool = typer.Option(
+        False, "--context-only", "-c", help="Show retrieved context only, ignoring LMM settings."
+    ),
+) -> None:
     """Run a retrieval (and optional local LMM) query against the index.
     Time Complexity: O(N)
     Space Complexity: O(N)
     """
-    asyncio.run(_query_async(question))
+    asyncio.run(_query_async(question, context_only))
 
 
 @app.command("validate-lmm")
@@ -111,7 +116,7 @@ async def _ingest_async(pdf_path: str) -> None:
         console.print(f"Ingested {len(processed_elements)} elements.")
 
 
-async def _query_async(question: str) -> None:
+async def _query_async(question: str, context_only: bool = False) -> None:
     """Ask a question: retrieves relevant chunks and (optionally) runs the LMM.
     Time Complexity: O(N)
     Space Complexity: O(N)
@@ -128,13 +133,66 @@ async def _query_async(question: str) -> None:
         # 2) Pull the top-k most relevant elements.
         retriever = Retriever(embedding_client, index, store)
         elements = await retriever.retrieve(question, settings.top_k)
-        if not settings.enable_lmm:
+        # Respect explicit context-only flag, otherwise fall back to settings.
+        if context_only or not settings.enable_lmm:
             _render_context_only(elements)
             return
         # 3) Ask the LMM to answer using only retrieved context.
         lmm_client = _build_lmm_client(settings)
         answer = await lmm_client.answer(question, elements)
         _render_answer(answer.answer, elements)
+
+
+@app.command("status")
+def status() -> None:
+    """Show the presence and basic stats for the FAISS index and SQLite DB.
+
+    Time Complexity: O(1)
+    Space Complexity: O(1)
+    """
+    settings = AppSettings.from_env()
+    _configure_logging(settings.log_level)
+
+    faiss_index = FaissIndex(settings.faiss_index_path)
+    index_exists = faiss_index.exists()
+
+    sqlite_path = Path(settings.sqlite_path)
+    sqlite_exists = sqlite_path.exists()
+
+    table = Table(title="Index Status")
+    table.add_column("Resource")
+    table.add_column("Present")
+    table.add_column("Count / Details")
+
+    # FAISS info
+    if index_exists:
+        try:
+            faiss_index.load_existing()
+            count = faiss_index.count()
+            dim = faiss_index.dimension()
+            table.add_row("FAISS index", "yes", f"vectors={count}, dim={dim}")
+        except Exception as exc:
+            table.add_row("FAISS index", "yes", f"error: {exc}")
+    else:
+        table.add_row("FAISS index", "no", "-")
+
+    # SQLite info
+    if sqlite_exists:
+        try:
+            with SQLiteKVStore(settings.sqlite_path) as store:
+                el_count = store.count_elements()
+                vm_count = store.count_vector_meta()
+            mtime = sqlite_path.stat().st_mtime
+            from datetime import datetime
+
+            last_mod = datetime.fromtimestamp(mtime).isoformat()
+            table.add_row("SQLite DB", "yes", f"elements={el_count}, vectors={vm_count}, last_mod={last_mod}")
+        except Exception as exc:
+            table.add_row("SQLite DB", "yes", f"error: {exc}")
+    else:
+        table.add_row("SQLite DB", "no", "-")
+
+    console.print(table)
 
 
 def _build_router(settings: AppSettings, session: aiohttp.ClientSession) -> ElementRouter:

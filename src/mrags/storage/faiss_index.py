@@ -70,6 +70,25 @@ class FaissIndex:
         ensure_parent_dir(self._index_path)
         faiss.write_index(self._index, self._index_path)
 
+    def exists(self) -> bool:
+        """Return True if the FAISS index file exists on disk.
+
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        return Path(self._index_path).exists()
+
+    def count(self) -> int:
+        """Return the number of vectors stored in the loaded index.
+
+        Raises StorageError if the index is not loaded.
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        if self._index is None:
+            raise StorageError("FAISS index is not initialized")
+        return int(self._index.ntotal)
+
     def dimension(self) -> int:
         """Time Complexity: O(1)
         Space Complexity: O(1)
