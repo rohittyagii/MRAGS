@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from mrags.models import Modality, RetrievedElement
+from mrags.models import RetrievedElement
 from mrags.storage.embeddings import EmbeddingsClient
 from mrags.storage.faiss_index import FaissIndex
 from mrags.storage.sqlite_kv import SQLiteKVStore

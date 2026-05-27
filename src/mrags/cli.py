@@ -20,7 +20,7 @@ from mrags.ingestion.router import ElementRouter
 from mrags.ingestion.table_processor import TableProcessor
 from mrags.ingestion.text_processor import TextProcessor
 from mrags.ingestion.vlm_client import NoopVLMClient, OpenAIVLMClient
-from mrags.models import Modality, RetrievedElement
+from mrags.models import RetrievedElement
 from mrags.retrieval.retriever import Retriever
 from mrags.storage.embeddings import EmbeddingsClient, LocalEmbeddingsClient
 from mrags.storage.faiss_index import FaissIndex
