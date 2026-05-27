@@ -5,6 +5,9 @@
 - CLI commands: ingest, query, validate-lmm.
 - validate-lmm runs successfully with local GGUF model path.
 - Tests: smoke test is green.
+- Repo created and pushed: https://github.com/rohittyagii/MRAGS (branch: main).
+- Application.pdf ingested successfully (20 elements).
+- Summary still needs a local GGUF model path or OPENAI_API_KEY.
 
 ## Current Environment
 - Python env detected by tooling: system Python 3.14.
@@ -30,3 +33,4 @@
 ## Notes
 - VLM is disabled by default for offline mode (ENABLE_VLM=false).
 - LMM is enabled by default for local mode (ENABLE_LMM=true, LMM_BACKEND=local).
+- Tesseract is installed but PATH was set per session when running ingest.

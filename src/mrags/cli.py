@@ -20,7 +20,7 @@ from mrags.ingestion.router import ElementRouter
 from mrags.ingestion.table_processor import TableProcessor
 from mrags.ingestion.text_processor import TextProcessor
 from mrags.ingestion.vlm_client import NoopVLMClient, OpenAIVLMClient
-from mrags.models import Modality
+from mrags.models import Modality, RetrievedElement
 from mrags.retrieval.retriever import Retriever
 from mrags.storage.embeddings import EmbeddingsClient, LocalEmbeddingsClient
 from mrags.storage.faiss_index import FaissIndex
@@ -125,7 +125,7 @@ async def _query_async(question: str) -> None:
         retriever = Retriever(embedding_client, index, store)
         elements = await retriever.retrieve(question, settings.top_k)
         if not settings.enable_lmm:
-            _render_answer("LMM disabled; showing retrieved context only.", elements)
+            _render_context_only(elements)
             return
         # 3) Ask the LMM to answer using only retrieved context.
         lmm_client = _build_lmm_client(settings)
@@ -241,19 +241,51 @@ def _require_openai_client(settings: AppSettings) -> AsyncOpenAI:
     return AsyncOpenAI(api_key=_require_openai_key(settings))
 
 
-def _render_answer(answer: str, elements) -> None:
+def _render_answer(answer: str, elements: list[RetrievedElement]) -> None:
     """Time Complexity: O(N)
     Space Complexity: O(N)
     """
     console.print("\nAnswer:\n")
     console.print(answer)
-    table = Table(title="Retrieved Context")
-    table.add_column("ID")
-    table.add_column("Modality")
-    table.add_column("Score")
+    _render_retrieved_context(elements)
+
+
+def _render_context_only(elements: list[RetrievedElement]) -> None:
+    """Time Complexity: O(N)
+    Space Complexity: O(N)
+    """
+    console.print("\nLMM is disabled, so here is the retrieved context only.\n")
+    _render_retrieved_context(elements)
+
+
+def _render_retrieved_context(elements: list[RetrievedElement]) -> None:
+    """Time Complexity: O(N)
+    Space Complexity: O(N)
+    """
+    table = Table(title="Retrieved Context (Top Matches)")
+    table.add_column("ID", overflow="fold")
+    table.add_column("Modality", style="cyan")
+    table.add_column("Score", justify="right")
+    table.add_column("Preview", overflow="fold")
     for element in elements:
-        table.add_row(element.element_id, element.modality.value, f"{element.score:.3f}")
+        preview = _preview_text(element.raw_content, max_len=180)
+        table.add_row(
+            element.element_id,
+            element.modality.value,
+            f"{element.score:.3f}",
+            preview,
+        )
     console.print(table)
+
+
+def _preview_text(text: str, max_len: int = 160) -> str:
+    """Time Complexity: O(N)
+    Space Complexity: O(N)
+    """
+    normalized = " ".join(text.split())
+    if len(normalized) <= max_len:
+        return normalized
+    return f"{normalized[: max_len - 3]}..."
 
 
 def main() -> None:
