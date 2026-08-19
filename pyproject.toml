@@ -10,6 +10,7 @@ authors = [
 ]
 dependencies = [
   "pydantic>=2.7.0",
+  "pydantic-settings>=2.3.0",
   "unstructured[local-inference]>=0.15.0",
   "pdf2image>=1.17.0",
   "pillow>=10.0.0",

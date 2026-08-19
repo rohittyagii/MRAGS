@@ -1,21 +1,42 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class AppSettings(BaseModel):
-    """Application configuration read from environment variables.
+class AppSettings(BaseSettings):
+    """Application configuration read from environment variables or a .env file.
 
-    This holds sensible defaults so the CLI works out of the box.
+    pydantic-settings automatically reads every field from its matching
+    environment variable (case-insensitive) and, when a `.env` file is
+    present, loads it first.  No manual ``os.environ.get`` calls are needed.
+
+    Example — override any field from the shell::
+
+        EMBEDDING_BACKEND=local mrags ingest file.pdf
     """
-    openai_api_key: str | None = None
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        # Don't raise if .env is missing — it's optional.
+        env_ignore_empty=False,
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
+
     embedding_backend: str = "openai"
     embedding_model: str = "text-embedding-3-small"
     local_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+
     vlm_model: str = "gpt-4o-mini"
+    enable_vlm: bool = True
+
     lmm_model: str = "gpt-4o"
     lmm_backend: str = "openai"
     lmm_model_path: str = ""
@@ -24,16 +45,18 @@ class AppSettings(BaseModel):
     lmm_n_threads: int = 8
     lmm_max_tokens: int = 512
     lmm_temperature: float = 0.2
-    enable_vlm: bool = True
     enable_lmm: bool = True
+
     request_timeout_s: int = 60
     max_concurrency: int = 5
     chunk_tokens: int = 500
     chunk_overlap: int = 50
     top_k: int = 5
+
     faiss_index_path: str = "data/faiss.index"
     sqlite_path: str = "data/mrags.sqlite"
     log_level: str = "INFO"
+
     image_summary_prompt: str = (
         "You are an analytical engine. Describe the chart or diagram with axes, "
         "units, trends, and key data points. If a table is visible, summarize it."
@@ -41,46 +64,17 @@ class AppSettings(BaseModel):
 
     @classmethod
     def from_env(cls) -> "AppSettings":
-        """Build `AppSettings` by reading environment variables.
+        """Build ``AppSettings`` from the environment (and optional .env file).
+
+        This is a thin compatibility shim — callers that used the old
+        ``AppSettings.from_env()`` pattern continue to work unchanged.
+        pydantic-settings handles all the env / .env loading automatically
+        when the class is instantiated.
 
         Time Complexity: O(1)
         Space Complexity: O(1)
         """
-        defaults = cls()
-        openai_api_key = os.environ.get("OPENAI_API_KEY", "").strip() or None
-        return cls(
-            openai_api_key=openai_api_key,
-            embedding_backend=os.environ.get("EMBEDDING_BACKEND", defaults.embedding_backend),
-            embedding_model=os.environ.get("EMBEDDING_MODEL", defaults.embedding_model),
-            local_embedding_model=os.environ.get(
-                "LOCAL_EMBEDDING_MODEL", defaults.local_embedding_model
-            ),
-            vlm_model=os.environ.get("VLM_MODEL", defaults.vlm_model),
-            lmm_model=os.environ.get("LMM_MODEL", defaults.lmm_model),
-            lmm_backend=os.environ.get("LMM_BACKEND", defaults.lmm_backend),
-            lmm_model_path=os.environ.get("LMM_MODEL_PATH", defaults.lmm_model_path),
-            lmm_n_gpu_layers=int(
-                os.environ.get("LMM_N_GPU_LAYERS", defaults.lmm_n_gpu_layers)
-            ),
-            lmm_n_ctx=int(os.environ.get("LMM_N_CTX", defaults.lmm_n_ctx)),
-            lmm_n_threads=int(os.environ.get("LMM_N_THREADS", defaults.lmm_n_threads)),
-            lmm_max_tokens=int(os.environ.get("LMM_MAX_TOKENS", defaults.lmm_max_tokens)),
-            lmm_temperature=float(
-                os.environ.get("LMM_TEMPERATURE", defaults.lmm_temperature)
-            ),
-            enable_vlm=_parse_bool(os.environ.get("ENABLE_VLM"), defaults.enable_vlm),
-            enable_lmm=_parse_bool(os.environ.get("ENABLE_LMM"), defaults.enable_lmm),
-            request_timeout_s=int(
-                os.environ.get("REQUEST_TIMEOUT_S", defaults.request_timeout_s)
-            ),
-            max_concurrency=int(os.environ.get("MAX_CONCURRENCY", defaults.max_concurrency)),
-            chunk_tokens=int(os.environ.get("CHUNK_TOKENS", defaults.chunk_tokens)),
-            chunk_overlap=int(os.environ.get("CHUNK_OVERLAP", defaults.chunk_overlap)),
-            top_k=int(os.environ.get("TOP_K", defaults.top_k)),
-            faiss_index_path=os.environ.get("FAISS_INDEX_PATH", defaults.faiss_index_path),
-            sqlite_path=os.environ.get("SQLITE_PATH", defaults.sqlite_path),
-            log_level=os.environ.get("LOG_LEVEL", defaults.log_level),
-        )
+        return cls()
 
 
 def ensure_parent_dir(path_str: str) -> None:
@@ -91,14 +85,3 @@ def ensure_parent_dir(path_str: str) -> None:
     """
     path = Path(path_str)
     path.parent.mkdir(parents=True, exist_ok=True)
-
-
-def _parse_bool(value: str | None, default: bool) -> bool:
-    """Parse common truthy strings into a boolean.
-
-    Time Complexity: O(1)
-    Space Complexity: O(1)
-    """
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
